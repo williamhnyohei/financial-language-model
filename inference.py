@@ -15,18 +15,18 @@ def load_vocab(vocab_filepath):
     """
     with open(vocab_filepath, 'r', encoding='utf-8') as f:
         vocab = f.read().splitlines()
-    word2idx = {word: idx for idx, word in enumerate(vocab)}
-    idx2word = {idx: word for word, idx in word2idx.items()}
-    return word2idx, idx2word
+    word2idx_local = {word: idx for idx, word in enumerate(vocab)}
+    idx2word_local = {idx: word for word, idx in word2idx_local.items()}
+    return word2idx_local, idx2word_local
 
-def load_model(model_filepath, vocab_size, embed_dim, hidden_dim, num_layers):
+def load_model(model_filepath, vocab_size_local, embed_dim_local, hidden_dim_local, num_layers_local):
     """
     Load the trained model from a file.
     """
-    model = LSTMModel(vocab_size, embed_dim, hidden_dim, num_layers=num_layers)
-    model.load_state_dict(torch.load(model_filepath))
-    model.eval()
-    return model
+    model_local = LSTMModel(vocab_size_local, embed_dim_local, hidden_dim_local, num_layers=num_layers_local)
+    model_local.load_state_dict(torch.load(model_filepath))
+    model_local.eval()
+    return model_local
 
 def generate_text(model, start_text, word2idx, idx2word, predict_len=10):
     """
@@ -66,8 +66,8 @@ if __name__ == "__main__":
     # Load vocabulary and model
     word2idx, idx2word = load_vocab(VOCAB_PATH)
     vocab_size = len(word2idx)
-    model = load_model(MODEL_PATH, vocab_size, EMBED_DIM, HIDDEN_DIM, NUM_LAYERS)
+    lstm_model = load_model(MODEL_PATH, vocab_size, EMBED_DIM, HIDDEN_DIM, NUM_LAYERS)
 
     # Generate text
-    generated_text = generate_text(model, START_TEXT, word2idx, idx2word, predict_len=10)
+    generated_text = generate_text(lstm_model, START_TEXT, word2idx, idx2word, predict_len=10)
     print("Generated text:", generated_text)
