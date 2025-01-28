@@ -1,0 +1,39 @@
+Q1 2000 apple aapl caiu de aproximadamente US$3.52 para US$3.43 por ação ajustado por splits queda de cerca de 2.56 por cento
+motivos início do estresse no mercado de tecnologia e temores de supervalorização durante a bolha pontocom
+participantes ceo steve jobs ainda em fase de recuperação da companhia e fed sob comando de alan greenspan cauteloso com inflação
+formula variação percentual (3.43 - 3.52) / 3.52 * 100 investidores observam múltiplos elevados no setor
+
+Q2 2000 apple aapl subiu para cerca de US$3.75 no fechamento trimestral alta de aproximadamente 9.34 por cento
+motivos forte expectativa de resultados positivos na macworld e lançamentos de novos produtos
+participantes conselho de administração apoiando expansão da linha imac maior interesse de fundos de investimento
+formula variação (3.75 - 3.43) / 3.43 * 100 mercado segue dividido pela euforia da internet
+
+Q3 2000 apple aapl registrou queda para aproximadamente US$3.61 recuo de cerca de 3.73 por cento
+motivos preocupação crescente com a bolha de empresas pontocom e investidores realizando lucros
+participantes fed eleva ligeiramente as taxas de juros para conter inflação e esfriar o mercado de ações
+formula fluxo de caixa descontado fica pressionado pela taxa de desconto mais alta e perspectiva de menor crescimento
+
+Q4 2000 apple aapl fechou em torno de US$2.81 representando forte queda de cerca de 22.16 por cento
+motivos estouro mais visível da bolha pontocom no fim de 2000 e vendas abaixo do esperado no setor de tecnologia
+participantes fundos de venture capital reduzindo aportes em startups e wall street ficando pessimista com o segmento
+formula variação (2.81 - 3.61) / 3.61 * 100 analistas projetam retração no curto prazo
+
+Q1 2001 apple aapl atingiu aproximadamente US$2.38 recuo de 15.30 por cento em comparação ao trimestre anterior
+motivos impacto continuado do crash pontocom e sinais de desaceleração econômica nos estados unidos
+participantes steve jobs reforça planos de produtos inovadores mas clima de incerteza domina a nasdaq
+formula volatilidade aumenta medido pelo desvio padrão dos retornos mensais
+
+Q2 2001 apple aapl manteve-se perto de US$2.40 alta marginal de cerca de 0.84 por cento
+motivos leve estabilização do mercado após sucessivas quedas e expectativa de cortes nas taxas de juros pelo fed
+participantes alan greenspan inicia ciclo de redução na taxa básica preocupações com recessão
+formula variação (2.40 - 2.38) / 2.38 * 100 mesmo com pouca alta investidores permanecem cautelosos
+
+Q3 2001 apple aapl subiu para cerca de US$2.78 ganho de aproximadamente 15.83 por cento
+motivos boas vendas do imac e anúncio de planos para o ipod gerando entusiasmo
+participantes steve jobs impulsiona marketing forte fed continua corte de juros para reanimar a economia
+formula (2.78 - 2.40) / 2.40 * 100 fluxo de caixa descontado projeta maior lucro futuro
+
+Q4 2001 apple aapl avançou para aproximadamente US$2.86 alta de 2.88 por cento em relação ao trimestre anterior
+motivos introdução oficial do primeiro ipod em outubro de 2001 animando investidores apesar de clima pós-ataques de 11 de setembro
+participantes grandes fundos institucionais voltam a analisar empresas de tecnologia sólidos fundamentals de longo prazo
+formula variação (2.86 - 2.78) / 2.78 * 100 analistas estimam retomada gradual das ações de tech
