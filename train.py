@@ -33,16 +33,36 @@ def load_data(file_path: str, seq_len: int = 5):
     return torch.LongTensor(xs), torch.LongTensor(ys), vocab, word2idx, idx2word
 
 
-def train_batch(model, optimizer, criterion, x_batch, y_batch, vocab_size):
+def train_batch(config: dict, x_batch, y_batch):
     """
-    Train a single batch and return the loss.
+    Train a single batch using the given configuration.
     """
-    logits, _ = model(x_batch)
-    loss = criterion(logits.view(-1, vocab_size), y_batch.view(-1))
-    optimizer.zero_grad()
+    logits, _ = config["model"](x_batch)
+    loss = config["criterion"](
+        logits.view(-1, config["vocab_size"]),
+        y_batch.view(-1)
+    )
+    config["optimizer"].zero_grad()
     loss.backward()
-    optimizer.step()
+    config["optimizer"].step()
     return loss.item()
+
+
+def train_epoch(config: dict, xs, ys):
+    """
+    Train the model for one epoch.
+    """
+    dataset_size = xs.size(0)
+    num_batches = dataset_size // config["batch_size"]
+    total_loss = 0.0
+
+    for b in range(num_batches):
+        start = b * config["batch_size"]
+        end = start + config["batch_size"]
+        x_batch, y_batch = xs[start:end], ys[start:end]
+        total_loss += train_batch(config, x_batch, y_batch)
+
+    return total_loss / num_batches
 
 
 def train_language_model(config: dict):
@@ -56,18 +76,15 @@ def train_language_model(config: dict):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=config["lr"])
 
-    dataset_size = xs.size(0)
-    num_batches = dataset_size // config["batch_size"]
+    config.update({
+        "model": model,
+        "criterion": criterion,
+        "optimizer": optimizer,
+        "vocab_size": vocab_size
+    })
 
     for epoch in range(config["epochs"]):
-        total_loss = 0.0
-        for b in range(num_batches):
-            start = b * config["batch_size"]
-            end = start + config["batch_size"]
-            x_batch, y_batch = xs[start:end], ys[start:end]
-            total_loss += train_batch(model, optimizer, criterion, x_batch, y_batch, vocab_size)
-
-        avg_loss = total_loss / num_batches
+        avg_loss = train_epoch(config, xs, ys)
         print(f"Epoch [{epoch + 1}/{config['epochs']}] - Loss: {avg_loss:.4f}")
 
     torch.save(model.state_dict(), config["model_save_path"])
