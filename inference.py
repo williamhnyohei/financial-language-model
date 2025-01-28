@@ -15,25 +15,34 @@ def load_vocab(vocab_filepath):
     """
     with open(vocab_filepath, 'r', encoding='utf-8') as f:
         vocab = f.read().splitlines()
-    word2idx_local = {word: idx for idx, word in enumerate(vocab)}
-    idx2word_local = {idx: word for word, idx in word2idx_local.items()}
-    return word2idx_local, idx2word_local
+    word_to_idx = {word: idx for idx, word in enumerate(vocab)}
+    idx_to_word = {idx: word for word, idx in word_to_idx.items()}
+    return word_to_idx, idx_to_word
 
-def load_model(model_filepath, vocab_size_local, embed_dim_local, hidden_dim_local, num_layers_local):
+def load_model(
+    model_filepath, vocab_size_local, embed_dim_local, hidden_dim_local, num_layers_local
+):
     """
     Load the trained model from a file.
     """
-    model_local = LSTMModel(vocab_size_local, embed_dim_local, hidden_dim_local, num_layers=num_layers_local)
+    model_local = LSTMModel(
+        vocab_size_local,
+        embed_dim_local,
+        hidden_dim_local,
+        num_layers=num_layers_local
+    )
     model_local.load_state_dict(torch.load(model_filepath))
     model_local.eval()
     return model_local
 
-def generate_text(model, start_text, word2idx, idx2word, predict_len=10):
+def generate_text(
+    model, start_text, word_to_idx, idx_to_word, predict_len=10
+):
     """
     Generate text using the trained model.
     """
     tokens = start_text.lower().split()
-    input_ids = [word2idx.get(w, 0) for w in tokens]  # Use idx=0 if word not found
+    input_ids = [word_to_idx.get(w, 0) for w in tokens]  # Use idx=0 if word not found
     input_tensor = torch.LongTensor([input_ids])
     hidden = None
 
@@ -45,7 +54,7 @@ def generate_text(model, start_text, word2idx, idx2word, predict_len=10):
             last_logits = logits[0, -1, :]  # shape: (vocab_size,)
             probs = torch.softmax(last_logits, dim=0)
             next_idx = torch.multinomial(probs, 1).item()
-            next_word = idx2word[next_idx]
+            next_word = idx_to_word[next_idx]
             generated.append(next_word)
 
             # Update input_tensor to include the new token
@@ -64,10 +73,10 @@ if __name__ == "__main__":
     START_TEXT = "buy stocks"
 
     # Load vocabulary and model
-    word2idx, idx2word = load_vocab(VOCAB_PATH)
-    vocab_size = len(word2idx)
-    lstm_model = load_model(MODEL_PATH, vocab_size, EMBED_DIM, HIDDEN_DIM, NUM_LAYERS)
+    word_to_idx, idx_to_word = load_vocab(VOCAB_PATH)
+    vocab_size = len(word_to_idx)
+    model = load_model(MODEL_PATH, vocab_size, EMBED_DIM, HIDDEN_DIM, NUM_LAYERS)
 
     # Generate text
-    generated_text = generate_text(lstm_model, START_TEXT, word2idx, idx2word, predict_len=10)
-    print("Generated text:", generated_text)
+    GENERATED_TEXT = generate_text(model, START_TEXT, word_to_idx, idx_to_word, predict_len=10)
+    print("Generated text:", GENERATED_TEXT)
