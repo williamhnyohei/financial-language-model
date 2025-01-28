@@ -1,23 +1,30 @@
+"""
+inference.py
+
+This script loads a trained LSTM model for text generation and allows users to generate text
+based on a given start phrase.
+"""
+
+import os
 import torch
 from model import LSTMModel
-import os
 
-def load_vocab(vocab_file):
+def load_vocab(vocab_filepath):
     """
     Load vocabulary from file.
     """
-    with open(vocab_file, 'r', encoding='utf-8') as f:
+    with open(vocab_filepath, 'r', encoding='utf-8') as f:
         vocab = f.read().splitlines()
     word2idx = {word: idx for idx, word in enumerate(vocab)}
     idx2word = {idx: word for word, idx in word2idx.items()}
     return word2idx, idx2word
 
-def load_model(model_path, vocab_size, embed_dim, hidden_dim, num_layers):
+def load_model(model_filepath, vocab_size, embed_dim, hidden_dim, num_layers):
     """
     Load the trained model from a file.
     """
     model = LSTMModel(vocab_size, embed_dim, hidden_dim, num_layers=num_layers)
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_filepath))
     model.eval()
     return model
 
@@ -26,11 +33,11 @@ def generate_text(model, start_text, word2idx, idx2word, predict_len=10):
     Generate text using the trained model.
     """
     tokens = start_text.lower().split()
-    input_ids = [word2idx.get(w, 0) for w in tokens]  # use idx=0 if word not found
+    input_ids = [word2idx.get(w, 0) for w in tokens]  # Use idx=0 if word not found
     input_tensor = torch.LongTensor([input_ids])
     hidden = None
 
-    generated = tokens[:]  # copy tokens
+    generated = tokens[:]  # Copy tokens
     with torch.no_grad():
         for _ in range(predict_len):
             logits, hidden = model(input_tensor, hidden)
@@ -48,19 +55,19 @@ def generate_text(model, start_text, word2idx, idx2word, predict_len=10):
     return " ".join(generated)
 
 if __name__ == "__main__":
-    # Paths
-    model_path = os.path.join("data", "trained_model.pth")
-    vocab_file = os.path.join("data", "vocab.txt")
+    # Constants
+    MODEL_PATH = os.path.join("data", "trained_model.pth")
+    VOCAB_PATH = os.path.join("data", "vocab.txt")
+    EMBED_DIM = 32
+    HIDDEN_DIM = 64
+    NUM_LAYERS = 1
+    START_TEXT = "buy stocks"
 
     # Load vocabulary and model
-    word2idx, idx2word = load_vocab(vocab_file)
+    word2idx, idx2word = load_vocab(VOCAB_PATH)
     vocab_size = len(word2idx)
-    embed_dim = 32
-    hidden_dim = 64
-    num_layers = 1
-    model = load_model(model_path, vocab_size, embed_dim, hidden_dim, num_layers)
+    model = load_model(MODEL_PATH, vocab_size, EMBED_DIM, HIDDEN_DIM, NUM_LAYERS)
 
-    # Run inference
-    start_text = "buy stocks"
-    generated_text = generate_text(model, start_text, word2idx, idx2word, predict_len=10)
+    # Generate text
+    generated_text = generate_text(model, START_TEXT, word2idx, idx2word, predict_len=10)
     print("Generated text:", generated_text)
