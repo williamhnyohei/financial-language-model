@@ -1,20 +1,34 @@
+"""
+train.py
+
+This script trains an LSTM model for text generation using a given dataset.
+"""
+
+import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
-
-import os
 from model import LSTMModel
 
-def load_data(file_path, seq_len=5):
+
+def load_data(file_path: str, seq_len: int = 5):
     """
     Reads a text file, creates a vocabulary, and generates (x, y) pairs for language modeling.
-    (x = seq_len tokens, y = tokens shifted by 1)
+
+    Args:
+        file_path (str): Path to the dataset file.
+        seq_len (int): Number of tokens in each input sequence.
+
+    Returns:
+        tuple: Tensors for input (x), target (y), vocabulary, word-to-index, and index-to-word mappings.
     """
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"Data file not found: {file_path}")
     with open(file_path, 'r', encoding='utf-8') as f:
         text = f.read().lower()
 
     tokens = text.split()
-    vocab = sorted(list(set(tokens)))
+    vocab = sorted(set(tokens))
     word2idx = {w: i for i, w in enumerate(vocab)}
     idx2word = {i: w for w, i in word2idx.items()}
 
@@ -22,36 +36,55 @@ def load_data(file_path, seq_len=5):
 
     xs, ys = [], []
     for i in range(len(data_ids) - seq_len):
-        x_seq = data_ids[i:i+seq_len]
-        y_seq = data_ids[i+1:i+seq_len+1]  # next token
+        x_seq = data_ids[i:i + seq_len]
+        y_seq = data_ids[i + 1:i + seq_len + 1]  # next token
         xs.append(x_seq)
         ys.append(y_seq)
 
-    xs = torch.LongTensor(xs)
-    ys = torch.LongTensor(ys)
+    return (
+        torch.LongTensor(xs),
+        torch.LongTensor(ys),
+        vocab,
+        word2idx,
+        idx2word,
+    )
 
-    return xs, ys, vocab, word2idx, idx2word
 
 def train_language_model(
-    data_file,
-    seq_len=5,
-    embed_dim=32,
-    hidden_dim=64,
-    num_layers=1,
-    lr=0.01,
-    epochs=5,
-    batch_size=8
+    data_file: str,
+    seq_len: int = 5,
+    embed_dim: int = 32,
+    hidden_dim: int = 64,
+    num_layers: int = 1,
+    lr: float = 0.01,
+    epochs: int = 5,
+    batch_size: int = 8,
+    model_save_path: str = "trained_model.pth"
 ):
-    # Load data
+    """
+    Train an LSTM language model.
+
+    Args:
+        data_file (str): Path to the dataset file.
+        seq_len (int): Number of tokens in each input sequence.
+        embed_dim (int): Embedding dimension.
+        hidden_dim (int): Hidden layer dimension.
+        num_layers (int): Number of LSTM layers.
+        lr (float): Learning rate.
+        epochs (int): Number of training epochs.
+        batch_size (int): Batch size.
+        model_save_path (str): Path to save the trained model.
+
+    Returns:
+        tuple: Trained model, vocabulary, word-to-index, and index-to-word mappings.
+    """
     xs, ys, vocab, word2idx, idx2word = load_data(data_file, seq_len=seq_len)
     vocab_size = len(vocab)
 
-    # Create model
     model = LSTMModel(vocab_size, embed_dim, hidden_dim, num_layers=num_layers)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
 
-    # Split into mini-batches
     dataset_size = xs.size(0)
     num_batches = dataset_size // batch_size
 
@@ -63,10 +96,8 @@ def train_language_model(
             x_batch = xs[start:end]
             y_batch = ys[start:end]
 
-            # Forward
+            # Forward pass
             logits, _ = model(x_batch)
-            # logits: (batch_size, seq_len, vocab_size)
-            # Flatten logits and y_batch to compare them
             loss = criterion(
                 logits.view(-1, vocab_size),
                 y_batch.view(-1)
@@ -80,58 +111,75 @@ def train_language_model(
             total_loss += loss.item()
 
         avg_loss = total_loss / num_batches
-        print(f"Epoch [{epoch+1}/{epochs}] - Loss: {avg_loss:.4f}")
+        print(f"Epoch [{epoch + 1}/{epochs}] - Loss: {avg_loss:.4f}")
+
+    # Save the trained model
+    torch.save(model.state_dict(), model_save_path)
+    print(f"Model saved to {model_save_path}")
 
     return model, vocab, word2idx, idx2word
 
+
 def generate_text(
-    model,
-    start_text,
-    word2idx,
-    idx2word,
-    predict_len=10
+    model: LSTMModel,
+    start_text: str,
+    word2idx: dict,
+    idx2word: dict,
+    predict_len: int = 10
 ):
     """
-    Generates text using the trained model.
-    start_text: initial phrase (string), e.g., "buy"
-    predict_len: number of additional tokens to generate
+    Generate text using a trained LSTM model.
+
+    Args:
+        model (LSTMModel): Trained LSTM model.
+        start_text (str): Initial phrase to start text generation.
+        word2idx (dict): Word-to-index mapping.
+        idx2word (dict): Index-to-word mapping.
+        predict_len (int): Number of tokens to generate.
+
+    Returns:
+        str: Generated text.
     """
     model.eval()
     tokens = start_text.lower().split()
-    input_ids = [word2idx.get(w, 0) for w in tokens]  # use idx=0 if word not found
+    input_ids = [word2idx.get(w, 0) for w in tokens]  # Use idx=0 if word not found
     input_tensor = torch.LongTensor([input_ids])
     hidden = None
 
-    generated = tokens[:]  # copy tokens
+    generated = tokens[:]  # Copy tokens
     with torch.no_grad():
         for _ in range(predict_len):
             logits, hidden = model(input_tensor, hidden)
-            # Take the logits of the last position
             last_logits = logits[0, -1, :]  # shape: (vocab_size,)
             probs = torch.softmax(last_logits, dim=0)
             next_idx = torch.multinomial(probs, 1).item()
             next_word = idx2word[next_idx]
             generated.append(next_word)
 
-            # Update input_tensor to include the new token
             input_ids.append(next_idx)
             input_tensor = torch.LongTensor([input_ids])
 
     return " ".join(generated)
 
+
 if __name__ == "__main__":
-    data_file = os.path.join("data", "frases_acoes.txt")
-    model, vocab, w2i, i2w = train_language_model(
-        data_file=data_file,
+    DATA_FILE = os.path.join("data", "frases_acoes.txt")
+    MODEL_PATH = os.path.join("data", "trained_model.pth")
+
+    # Train the model
+    MODEL, VOCAB, W2I, I2W = train_language_model(
+        data_file=DATA_FILE,
         seq_len=5,
         embed_dim=32,
         hidden_dim=64,
         num_layers=1,
         lr=0.01,
         epochs=5,
-        batch_size=8
+        batch_size=8,
+        model_save_path=MODEL_PATH
     )
 
-    texto_inicial = "compra"
-    texto_gerado = generate_text(model, texto_inicial, w2i, i2w, predict_len=10)
-    print("Texto gerado:", texto_gerado)
+    # Generate text
+    START_TEXT = "compra"
+    GENERATED_TEXT = generate_text(MODEL, START_TEXT, W2I, I2W, predict_len=10)
+    print("Generated text:", GENERATED_TEXT)
