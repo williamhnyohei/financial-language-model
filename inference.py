@@ -9,37 +9,69 @@ import os
 import torch
 from model import LSTMModel
 
-def load_vocab(vocab_filepath):
+
+def load_vocab(vocab_filepath: str) -> tuple[dict[str, int], dict[int, str]]:
     """
     Load vocabulary from file.
+
+    Args:
+        vocab_filepath (str): Path to the vocabulary file.
+
+    Returns:
+        tuple: A tuple containing word-to-index and index-to-word mappings.
     """
+    if not os.path.exists(vocab_filepath):
+        raise FileNotFoundError(f"Vocabulary file not found: {vocab_filepath}")
     with open(vocab_filepath, 'r', encoding='utf-8') as f:
         vocab = f.read().splitlines()
-    local_word_to_idx = {word: idx for idx, word in enumerate(vocab)}
-    local_idx_to_word = {idx: word for word, idx in local_word_to_idx.items()}
-    return local_word_to_idx, local_idx_to_word
+    word_to_idx = {word: idx for idx, word in enumerate(vocab)}
+    idx_to_word = {idx: word for word, idx in word_to_idx.items()}
+    return word_to_idx, idx_to_word
+
 
 def load_model(
-    model_filepath, vocab_size, embed_dim, hidden_dim, num_layers
-):
+    model_filepath: str, vocab_size: int, embed_dim: int, hidden_dim: int, num_layers: int
+) -> LSTMModel:
     """
     Load the trained model from a file.
+
+    Args:
+        model_filepath (str): Path to the model file.
+        vocab_size (int): Vocabulary size.
+        embed_dim (int): Embedding dimension.
+        hidden_dim (int): Hidden layer dimension.
+        num_layers (int): Number of LSTM layers.
+
+    Returns:
+        LSTMModel: The loaded LSTM model.
     """
-    local_model = LSTMModel(
-        vocab_size,
-        embed_dim,
-        hidden_dim,
-        num_layers=num_layers
-    )
-    local_model.load_state_dict(torch.load(model_filepath))
-    local_model.eval()
-    return local_model
+    if not os.path.exists(model_filepath):
+        raise FileNotFoundError(f"Model file not found: {model_filepath}")
+    model = LSTMModel(vocab_size, embed_dim, hidden_dim, num_layers=num_layers)
+    model.load_state_dict(torch.load(model_filepath))
+    model.eval()
+    return model
+
 
 def generate_text(
-    lstm_model, start_phrase, word_to_idx_map, idx_to_word_map, predict_len=10
-):
+    lstm_model: LSTMModel,
+    start_phrase: str,
+    word_to_idx_map: dict[str, int],
+    idx_to_word_map: dict[int, str],
+    predict_len: int = 10,
+) -> str:
     """
     Generate text using the trained model.
+
+    Args:
+        lstm_model (LSTMModel): The trained LSTM model.
+        start_phrase (str): The initial phrase to start text generation.
+        word_to_idx_map (dict): Word-to-index mapping.
+        idx_to_word_map (dict): Index-to-word mapping.
+        predict_len (int): Number of tokens to generate.
+
+    Returns:
+        str: Generated text.
     """
     tokens = start_phrase.lower().split()
     input_ids = [word_to_idx_map.get(w, 0) for w in tokens]  # Use idx=0 if word not found
@@ -63,6 +95,7 @@ def generate_text(
 
     return " ".join(generated)
 
+
 if __name__ == "__main__":
     # Constants
     MODEL_PATH = os.path.join("data", "trained_model.pth")
@@ -73,12 +106,12 @@ if __name__ == "__main__":
     START_PHRASE = "buy stocks"
 
     # Load vocabulary and model
-    GLOBAL_WORD_TO_IDX, GLOBAL_IDX_TO_WORD = load_vocab(VOCAB_PATH)
-    VOCAB_SIZE = len(GLOBAL_WORD_TO_IDX)
-    LSTM_MODEL = load_model(MODEL_PATH, VOCAB_SIZE, EMBED_DIM, HIDDEN_DIM, NUM_LAYERS)
+    WORD_TO_IDX, IDX_TO_WORD = load_vocab(VOCAB_PATH)
+    VOCAB_SIZE = len(WORD_TO_IDX)
+    MODEL = load_model(MODEL_PATH, VOCAB_SIZE, EMBED_DIM, HIDDEN_DIM, NUM_LAYERS)
 
     # Generate text
     GENERATED_TEXT = generate_text(
-        LSTM_MODEL, START_PHRASE, GLOBAL_WORD_TO_IDX, GLOBAL_IDX_TO_WORD, predict_len=10
+        MODEL, START_PHRASE, WORD_TO_IDX, IDX_TO_WORD, predict_len=10
     )
     print("Generated text:", GENERATED_TEXT)
