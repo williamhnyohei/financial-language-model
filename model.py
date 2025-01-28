@@ -5,6 +5,7 @@ This module contains the LSTMModel class, which defines a simple LSTM-based mode
 """
 
 from torch import nn
+import torch
 
 class LSTMModel(nn.Module):
     """
@@ -28,7 +29,12 @@ class LSTMModel(nn.Module):
         """
         super().__init__()
         self.embed = nn.Embedding(vocab_size, embed_dim)
-        self.lstm = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers, batch_first=True)
+        self.lstm = nn.LSTM(
+            embed_dim, 
+            hidden_dim, 
+            num_layers=num_layers, 
+            batch_first=True
+        )
         self.fc = nn.Linear(hidden_dim, vocab_size)
 
     def forward(self, x, hidden=None):
@@ -47,3 +53,17 @@ class LSTMModel(nn.Module):
         out, hidden = self.lstm(embeds, hidden)  # (batch_size, seq_len, hidden_dim)
         logits = self.fc(out)  # (batch_size, seq_len, vocab_size)
         return logits, hidden
+
+    def init_hidden(self, batch_size):
+        """
+        Initialize the hidden state for the LSTM.
+
+        Args:
+            batch_size (int): The batch size.
+
+        Returns:
+            Tuple[Tensor, Tensor]: Initialized hidden state (h0, c0).
+        """
+        h0 = torch.zeros(self.lstm.num_layers, batch_size, self.lstm.hidden_size)
+        c0 = torch.zeros(self.lstm.num_layers, batch_size, self.lstm.hidden_size)
+        return h0, c0
