@@ -13,6 +13,13 @@ from model import LSTMModel
 def load_data(file_path: str, seq_len: int = 5):
     """
     Reads a text file, creates a vocabulary, and generates (x, y) pairs for language modeling.
+
+    Args:
+        file_path (str): Path to the dataset file.
+        seq_len (int): Number of tokens in each input sequence.
+
+    Returns:
+        tuple: Input (x), target (y) tensors, vocabulary, word-to-index, and index-to-word mappings.
     """
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Data file not found: {file_path}")
@@ -36,6 +43,14 @@ def load_data(file_path: str, seq_len: int = 5):
 def train_batch(config: dict, x_batch, y_batch):
     """
     Train a single batch using the given configuration.
+
+    Args:
+        config (dict): Training configuration.
+        x_batch (Tensor): Input batch tensor.
+        y_batch (Tensor): Target batch tensor.
+
+    Returns:
+        float: Loss value for the batch.
     """
     logits, _ = config["model"](x_batch)
     loss = config["criterion"](
@@ -51,6 +66,14 @@ def train_batch(config: dict, x_batch, y_batch):
 def train_epoch(config: dict, xs, ys):
     """
     Train the model for one epoch.
+
+    Args:
+        config (dict): Training configuration.
+        xs (Tensor): Input sequences.
+        ys (Tensor): Target sequences.
+
+    Returns:
+        float: Average loss for the epoch.
     """
     dataset_size = xs.size(0)
     num_batches = dataset_size // config["batch_size"]
@@ -68,11 +91,18 @@ def train_epoch(config: dict, xs, ys):
 def train_language_model(config: dict):
     """
     Train an LSTM language model using the given configuration.
+
+    Args:
+        config (dict): Training configuration.
+
+    Returns:
+        tuple: Trained model, vocabulary, word-to-index, and index-to-word mappings.
     """
     xs, ys, vocab, word2idx, idx2word = load_data(config["data_file"], seq_len=config["seq_len"])
     vocab_size = len(vocab)
 
-    model = LSTMModel(vocab_size, config["embed_dim"], config["hidden_dim"], num_layers=config["num_layers"])
+    model = LSTMModel(vocab_size, config["embed_dim"], config["hidden_dim"],
+                      num_layers=config["num_layers"])
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=config["lr"])
 
@@ -85,7 +115,9 @@ def train_language_model(config: dict):
 
     for epoch in range(config["epochs"]):
         avg_loss = train_epoch(config, xs, ys)
-        print(f"Epoch [{epoch + 1}/{config['epochs']}] - Loss: {avg_loss:.4f}")
+        print(
+            f"Epoch [{epoch + 1}/{config['epochs']}] - Loss: {avg_loss:.4f}"
+        )
 
     torch.save(model.state_dict(), config["model_save_path"])
     print(f"Model saved to {config['model_save_path']}")
